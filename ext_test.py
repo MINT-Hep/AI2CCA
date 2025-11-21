@@ -97,11 +97,11 @@ if __name__ == "__main__":
                 eps_data = json.load(f)
             best_eps = float(eps_data.get("best_eps", args.odin_eps))
             odin_T = float(eps_data.get("T", args.odin_T))
-            print(f"[FOLD {i}] Loaded best_eps={best_eps:g}, T={odin_T} from {eps_path}")
+            print(f"[FOLD {i}] Loaded best_eps={best_eps:g} from {eps_path}")
         else:
             best_eps = args.odin_eps
             odin_T = args.odin_T
-            print(f"[FOLD {i}] WARN: {eps_path} missing, using fallback eps={best_eps:g}, T={odin_T}")
+            print(f"[FOLD {i}] WARN: {eps_path} missing, using fallback eps={best_eps:g}")
 
         # === Run ODIN evaluation ===
         results, outputs, _ = eval_odin(

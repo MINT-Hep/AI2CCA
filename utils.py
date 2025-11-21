@@ -2,23 +2,18 @@ import os
 import torch
 import numpy as np
 from typing import Any, Dict, List, Optional, Union
-import torch.nn as nn
-from torchvision import transforms
 from torch.utils.data import DataLoader, Sampler, WeightedRandomSampler, RandomSampler, SequentialSampler, sampler
-import torch.optim as optim
-import pdb
-import torch.nn.functional as F
 import math
 from itertools import islice
 import collections
+
 from sklearn.metrics import (
     accuracy_score,
-    balanced_accuracy_score,
-    classification_report,
-    cohen_kappa_score,
-    log_loss,
     roc_auc_score,
+    confusion_matrix,
+    log_loss
 )
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -101,59 +96,44 @@ def get_eval_metrics(
     preds_all: Union[List[int], np.ndarray],
     probs_all: Optional[Union[List[float], np.ndarray]] = None,
     unique_classes: Optional[List[int]] = None,
-    get_report: bool = True,
-    prefix: str = "",
     roc_kwargs: Dict[str, Any] = {},
 ) -> Dict[str, Any]:
-    """
-    Calculate evaluation metrics and return them in a dictionary.
+    targets_all = np.asarray(targets_all)
+    preds_all = np.asarray(preds_all)
+    if unique_classes is None:
+        unique_classes = np.unique(targets_all)
 
-    Args:
-        targets_all: True labels.
-        preds_all: Predicted labels.
-        probs_all: Predicted probabilities for each class. Optional.
-        unique_classes: Explicit list of class labels. If None, inferred from targets_all.
-        get_report: Whether to compute classification_report (used for weighted F1).
-        prefix: Unused in this simplified version, kept for compatibility.
-        roc_kwargs: Additional kwargs for roc_auc_score.
-
-    Returns:
-        A dict with keys:
-            acc, bacc, kappa, nw_kappa, weighted_f1
-        And if probs_all is provided and targets are not all the same:
-            loss, auroc
-    """
-    unique_classes = unique_classes if unique_classes is not None else np.unique(targets_all)
-    bacc = balanced_accuracy_score(targets_all, preds_all) if len(targets_all) > 1 else 0
-    kappa = cohen_kappa_score(targets_all, preds_all, weights="quadratic")
-    nw_kappa = cohen_kappa_score(targets_all, preds_all, weights="linear")
+    # 1) Accuracy
     acc = accuracy_score(targets_all, preds_all)
-    cls_rep = classification_report(
-        targets_all,
-        preds_all,
-        output_dict=True,
-        zero_division=0,
-        labels=unique_classes,
-    )
+
+    loss = None
+    if probs_all is not None:
+        try:
+            loss = log_loss(targets_all, probs_all, labels=unique_classes)
+        except ValueError:
+            loss = None
+
+    auc = None
+    if probs_all is not None and len(np.unique(targets_all)) > 1:
+        try:
+            auc = roc_auc_score(targets_all, probs_all, labels=unique_classes, **roc_kwargs)
+        except ValueError:
+            auc = None
+
+    fpr = None
+    if len(unique_classes) == 2:
+        cm = confusion_matrix(targets_all, preds_all, labels=list(unique_classes))
+        if cm.shape == (2, 2):
+            tn, fp, fn, tp = cm.ravel()
+            denom = fp + tn
+            fpr = fp / denom if denom > 0 else 0.0
 
     eval_metrics: Dict[str, Any] = {
         "acc": acc,
-        "bacc": bacc,
-        "kappa": kappa,
-        "nw_kappa": nw_kappa,
-        "weighted_f1": cls_rep["weighted avg"]["f1-score"],
+        "auc": auc,
+        "fpr": fpr,
+        "loss": loss,
     }
-
-    if probs_all is not None:
-        if len(np.unique(targets_all)) > 1:
-            try:
-                loss = log_loss(targets_all, probs_all, labels=unique_classes)
-                roc_auc = roc_auc_score(targets_all, probs_all, labels=unique_classes, **roc_kwargs)
-            except ValueError:
-                roc_auc = -1
-                loss = -1
-            eval_metrics["loss"] = loss
-            eval_metrics["auroc"] = roc_auc
 
     return eval_metrics
 

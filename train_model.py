@@ -107,8 +107,7 @@ if __name__ == "__main__":
     end = args.k if args.k_end == -1 else args.k_end
     folds = np.arange(start, end)
 
-    # To collect metrics for each fold (standard eval, i.e., eps=0, T=1)
-    acc, bacc, kappa, nw_kappa, weighted_f1, loss, auroc, fold_ids = [], [], [], [], [], [], [], []
+    acc, auc, fpr, loss, fold_ids = [], [], [], [], []
 
     # ---------------------------------------------------------------------
     # Cross-validation loop
@@ -181,6 +180,7 @@ if __name__ == "__main__":
         print(f"[Fold {i}] Best epsilon on VAL: {best_eps:g}  (baseline acc={base_acc:.4f}, mean_pmax={base_mean_pmax:.6f})")
         print(f"[Fold {i}] Epsilon selection saved to {eps_json}")
 
+        # ------------------ Test (best eps) ------------------
         # ------------------ Test (ODIN with T, best eps) ------------------
         odin_metrics, odin_outputs, _ = eval_odin(
             loader=test_loader,
@@ -190,6 +190,13 @@ if __name__ == "__main__":
             T=args.odin_T,
             eps=best_eps,
         )
+
+        acc.append(odin_metrics["acc"])
+        auc.append(odin_metrics["auc"])
+        fpr.append(odin_metrics["fpr"])
+        loss.append(odin_metrics["loss"])
+        fold_ids.append(i)
+
         # Save ODIN best-eps predictions
         if num_classes == 2:
             df_fold_odin = pd.DataFrame(odin_outputs)
@@ -205,21 +212,15 @@ if __name__ == "__main__":
 
         fold_csv_odin = os.path.join(args.results_dir, f"fold_{i}_odin.csv")
         df_fold_odin.to_csv(fold_csv_odin, index=False)
-        print(f"Saved fold predictions (ODIN T={args.odin_T}, eps={best_eps:g}) to {fold_csv_odin}")
+        print(f"Saved fold predictions (eps={best_eps:g}) to {fold_csv_odin}")
 
-    # ---------------------------------------------------------------------
-    # Save summary CSV across folds (standard eval)
-    # ---------------------------------------------------------------------
     df_all = pd.DataFrame(
         {
             "fold": fold_ids,
             "acc": acc,
-            "bacc": bacc,
-            "kappa": kappa,
-            "nw_kappa": nw_kappa,
-            "weighted_f1": weighted_f1,
+            "auc": auc,
+            "fpr": fpr,
             "loss": loss,
-            "auroc": auroc,
         }
     )
 
