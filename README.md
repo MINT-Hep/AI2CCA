@@ -9,15 +9,13 @@
 2. Create the virtual environment via conda
     ```
     conda create -n ai2cca python=3.11
-    ```
-3. Activate the virtual environment.
-    ```
     conda activate ai2cca
     ```
-4. Install the dependencies.
-   ```
-   pip install -r requirements.txt
-   ```
+3. Install the dependencies.
+    ```
+    pip install -r requirements.txt
+    cd ai2cca
+    ```
    
 ### Running training and inference
 1. Dataset: For the metadata .csv file organization, please refer to *example_metadata.csv*.
