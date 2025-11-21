@@ -246,7 +246,7 @@ def train(
     return model
 
 
-def eval(test_loader, model: nn.Module, num_classes: int, device: torch.device, prefix: str, **kwargs):
+def eval(test_loader, model: nn.Module, num_classes: int, device: torch.device):
     """
     Evaluate the model on a test set.
     Supports outputs of form logits or (logits, h, g) for OOD scores.
@@ -256,7 +256,6 @@ def eval(test_loader, model: nn.Module, num_classes: int, device: torch.device, 
         model: Trained model.
         num_classes: Number of classes.
         device: torch.device.
-        prefix: String prefix for metric keys (kept for compatibility).
         **kwargs: Extra arguments forwarded to model(...).
 
     Returns:
@@ -305,8 +304,7 @@ def eval(test_loader, model: nn.Module, num_classes: int, device: torch.device, 
         targets_all=targets_all,
         preds_all=preds_all,
         probs_all=probs_all,
-        roc_kwargs=roc_kwargs,
-        prefix=prefix,
+        roc_kwargs=roc_kwargs
     )
 
     outputs: Dict[str, Any] = {
@@ -429,8 +427,7 @@ def eval_odin(
         targets_all=targets_all,
         preds_all=preds_all,
         probs_all=probs_all,
-        roc_kwargs=roc_kwargs,
-        prefix="",
+        roc_kwargs=roc_kwargs
     )
 
     outputs = {
