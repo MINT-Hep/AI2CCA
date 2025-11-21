@@ -72,7 +72,7 @@ if __name__ == "__main__":
     model = GODINSequential(backbone, head, return_scores=True).to(device)
 
     # metric containers
-    acc, bacc, kappa, nw_kappa, weighted_f1, loss, auroc, fold_ids = [], [], [], [], [], [], [], []
+    acc, auc, fpr, loss, fold_ids = [], [], [], [], []
 
     # === Loop over folds ===
     for i in folds:
@@ -113,15 +113,12 @@ if __name__ == "__main__":
             eps=best_eps,
         )
 
-        # record metrics
+        # record metrics (acc, auc, fpr, loss)
         fold_ids.append(i)
         acc.append(results.get("acc", -1))
-        bacc.append(results.get("bacc", -1))
-        kappa.append(results.get("kappa", -1))
-        nw_kappa.append(results.get("nw_kappa", -1))
-        weighted_f1.append(results.get("weighted_f1", -1))
+        auc.append(results.get("auroc", -1))
+        fpr.append(results.get("fpr", -1))
         loss.append(results.get("loss", -1))
-        auroc.append(results.get("auroc", -1))
 
         # save per-fold predictions
         if num_classes == 2:
@@ -144,14 +141,12 @@ if __name__ == "__main__":
         {
             "fold": fold_ids,
             "acc": acc,
-            "bacc": bacc,
-            "kappa": kappa,
-            "nw_kappa": nw_kappa,
-            "weighted_f1": weighted_f1,
+            "auc": auc,
+            "fpr": fpr,
             "loss": loss,
-            "auroc": auroc,
         }
     )
+
 
     save_name = "summary.csv" if len(folds) == args.k else f"summary_partial_{start}_{end}.csv"
     summary_path = os.path.join(run_dir, save_name)
