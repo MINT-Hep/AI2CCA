@@ -181,7 +181,6 @@ if __name__ == "__main__":
         print(f"[Fold {i}] Epsilon selection saved to {eps_json}")
 
         # ------------------ Test (best eps) ------------------
-        # ------------------ Test (ODIN with T, best eps) ------------------
         odin_metrics, odin_outputs, _ = eval_odin(
             loader=test_loader,
             model=model,
@@ -192,7 +191,7 @@ if __name__ == "__main__":
         )
 
         acc.append(odin_metrics["acc"])
-        auc.append(odin_metrics["auc"])
+        auc.append(odin_metrics["auroc"])
         fpr.append(odin_metrics["fpr"])
         loss.append(odin_metrics["loss"])
         fold_ids.append(i)
