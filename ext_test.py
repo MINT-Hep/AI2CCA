@@ -85,7 +85,7 @@ if __name__ == "__main__":
         ckpt_path = os.path.join(args.models_dir, f"s_{i}_checkpoint.pt")
         if not os.path.isfile(ckpt_path):
             raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
-        ckpt = torch.load(ckpt_path, map_location=device)
+        ckpt = torch.load(ckpt_path, map_location=dev   ice)
         model.load_state_dict(ckpt, strict=True)
         model.to(device)
         model.eval()
