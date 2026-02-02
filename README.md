@@ -4,7 +4,7 @@
 ### Installation
 1. Clone the repository
    ```
-   git clone https://github.com/cyy325yyc/AI2CCA.git
+   git clone https://github.com/MINT-Hep/AI2CCA.git
    ```
 2. Create the virtual environment via conda
     ```
